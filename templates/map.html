@@ -13,13 +13,14 @@
 #map { height: 720px}
    </style>
    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<link href="https://fonts.googleapis.com/css?family=Yesteryear" rel="stylesheet">
 {% endblock %}
 
 {% block body %}
     <div class="row">
       <div class="col-lg-12">
-		  <h3>{{ config.CITIES[request.args["city"]]["name"] }} Poop Tracker</h3>
-		  <p>Click anywhere on the map to trace downstream sewage.</p>
+		  <h3><span style="font-family:'Yesteryear', cursive; font-size: 200%;">{{ config.CITIES[request.args["city"]]["name"] }}</span> Poop Tracker</h3>
+		  <p>Click anywhere on the map and see where its sewage goes.</p>
        <div id="map"></div>
       </div>
     </div>
