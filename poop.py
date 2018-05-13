@@ -37,6 +37,13 @@ def validate(flask_fn):
       return flask_fn(*args, **kwargs)
    return wrapped
 
+@app.route('/terminals')
+@validate
+def terminals():
+    query = "SELECT terminal FROM %s_terminals".format(request.args["city"])
+    g.c.execute(query)
+    return u'[' + u','.join(g.c) + u']'
+
 @app.route('/track_poop')
 @validate
 def track_poop():
@@ -72,80 +79,29 @@ FROM candidates
 ORDER BY dist
 LIMIT 1
 """, (lon, lat, lon, lat))
-   candidates = g.c.fetchall()
-   if len(candidates) == 0:
+   parent = g.c.fetchall()
+   if len(parent) == 0:
       return
-   candidates = candidates[0]
+   parent = parent[0]
 
-   # We have this hacky stuff because we need to do tiny distance searches on the last segment of every sewer.
-   # Luckily for us the most downstream segment is also the last one in the geometry.
+   g.c.execute("""
+SELECT ST_AsGeoJSON(ST_Transform(sewer, 4326)) FROM omaha_sewers where objectid in (
+    WITH RECURSIVE sewers(objectid, downstream) as (
+       SELECT objectid, downstream
+       FROM omaha_sewers
+       WHERE objectid = %s
 
-   # The geoms that we want at the end
-   sewers = set(candidates)
-   # The current sewer is the head for its children.
-   heads = set(candidates)
+       UNION ALL
 
-   while True:
-      # This will hold the children of heads.
-      # Eventually we run out of children and it'll be empty. That is when we break the loop.
-      downstreams = set()
-      for head in heads:
-         g.c.execute("""
-SELECT objectid
-FROM omaha_sewers
-WHERE upstream_manhole =
-    (SELECT downstream_manhole FROM omaha_sewers WHERE objectid = %s)
-""", (head,))
-         downstream_query = g.c.fetchall()
-         for x in downstream_query:
-            x = x[0]
-            sewers.add(x)
-            downstreams.add(x)
-
-         # Chasing foreign keys has failed us, do a distance search.
-         # Note that ST_Distance returns units of the SRID, for 102704 that's feet
-         # Most queries wind up hitting this condition a few times
-         if len(downstream_query) == 0:
-            # Get the last point in the head line segment
-            g.c.execute("""
-SELECT ST_AsText((dp).geom) AS wkt
-FROM (SELECT ST_DumpPoints(sewer) as dp FROM omaha_sewers WHERE objectid = %s) inn
-""", (head,))
-            last_point = g.c.fetchall()[-1][0]
-
-            g.c.execute("""
-SELECT objectid
-FROM (
-WITH candidates AS (
-   SELECT objectid, sewer
-   FROM omaha_sewers
-   WHERE objectid NOT IN %s
-   ORDER BY sewer <-> ST_PointFromText(%s, 102704)
-   LIMIT 100
+       SELECT dst.objectid, dst.downstream
+       FROM omaha_sewers dst
+       JOIN sewers ON sewers.downstream = dst.objectid
+    )
+    SELECT objectid FROM sewers
 )
-SELECT objectid,
-   ST_Distance(sewer, ST_PointFromText(%s, 102704)) as dist
-FROM candidates
-) inn
-WHERE dist < 5
-ORDER BY dist
-LIMIT 1
-""", (tuple(sewers), last_point, last_point))
-            downstream_query = g.c.fetchall()
-            for x in downstream_query:
-               x = x[0]
-               sewers.add(x)
-               downstreams.add(x)
+""", (parent,))
 
-            # we are at the very end of the system, give up
-            break
-      if len(downstreams) == 0:
-         break
-      heads = downstreams
-
-   g.c.execute('SELECT ST_AsGeoJSON(ST_Transform(sewer, 4326)) FROM omaha_sewers where objectid in ({0})'\
-      .format(','.join([str(x) for x in sewers])))
-   sewer_json = '[' + ','.join((x[0] for x in g.c if x[0] != None)) + ']'
+   sewer_json = u'[' + u','.join((x[0] for x in g.c)) + u']'
    return sewer_json
 
 @app.route('/')
