@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   {% block head %}{% endblock %}
+   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+   <title>{% block title %}{% endblock %}</title>
+   <style>
+      body {padding-top: 20px; padding-bottom: 20px;}
+      .navbar {margin-bottom: 20px;}
+   </style>
+</head>
+<body>
+   <div class="container-fluid">
+   {% block body %}{% endblock %}
+   </div>
+</body>
+</html>
+

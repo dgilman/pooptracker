@@ -1,0 +1,14 @@
+PG_DBNAME = ""
+PG_USER = ""
+PG_PASSWORD = ""
+PG_PORT = 5432
+PG_HOST = ""
+
+DEFAULT_CITY = "omaha"
+CITIES = {"omaha": {
+            "name": "Omaha",
+            "lat_lt": 41.091064527497061,
+            "lat_gt": 41.376539822656774,
+            "lon_lt": -96.30227087577579,
+            "lon_gt": -95.852022352671796}
+}
