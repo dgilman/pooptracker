@@ -4,6 +4,8 @@ PG_PASSWORD = ""
 PG_PORT = 5432
 PG_HOST = ""
 
+VENV_ACTIVATE = "/home/poop/omahapoop/venv/bin/activate_this.py"
+
 DEFAULT_CITY = "omaha"
 CITIES = {"omaha": {
             "name": "Omaha",

@@ -2,9 +2,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(__file__))
 
-from config import Config
+import config
 
-execfile(Config.activate_venv, dict(__file__=Config.activate_venv))
+execfile(config.VENV_ACTIVATE, dict(__file__=config.VENV_ACTIVATE))
 
 from poop import app as application
 
