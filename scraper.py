@@ -34,12 +34,15 @@ CREATE TABLE omaha_sewers (
     objectid INTEGER PRIMARY KEY,
     sewer_type INTEGER REFERENCES omaha_sewer_types(id),
     sewer geometry(MULTILINESTRING, 102704),
+    sewer_wgs84 geometry(MULTILINESTRING, 4326),
     upstream_manhole TEXT, -- these are mostly integers but have letters at the end
     downstream_manhole TEXT,
     downstream INTEGER)
 """)
     c.execute("CREATE INDEX ON omaha_sewers (upstream_manhole)")
     c.execute("CREATE INDEX ON omaha_sewers (downstream_manhole)")
+    # We do searches on the douglas county WKID as its units will be in feet.
+    # sewer_wgs84 is just an optimization to cache the transformed geometry.
     c.execute("CREATE INDEX ON omaha_sewers USING GIST (sewer)")
 
     offset = 0
@@ -74,10 +77,10 @@ CREATE TABLE omaha_sewers (
 
             c.execute("""
 INSERT INTO omaha_sewers
-(objectid, sewer_type, sewer, upstream_manhole, downstream_manhole)
+(objectid, sewer_type, sewer, sewer_wgs84, upstream_manhole, downstream_manhole)
 VALUES
-(%s, %s, ST_GeomFromText(%s, 102704), %s, %s)
-""", (sewer['attributes']['OBJECTID'], line_type_id, multilinestring, sewer['attributes']['UP_MANHOLE'], sewer['attributes']['DN_MANHOLE']))
+(%s, %s, ST_GeomFromText(%s, 102704), ST_Transform(ST_GeomFromText(%s, 102704), 4326), %s, %s)
+""", (sewer['attributes']['OBJECTID'], line_type_id, multilinestring, multilinestring, sewer['attributes']['UP_MANHOLE'], sewer['attributes']['DN_MANHOLE']))
         offset += PAGE_SIZE
     l.info('Omaha scraper completed.')
 
@@ -140,7 +143,7 @@ SELECT objectid,
    ST_Distance(sewer, ST_PointFromText(%s, 102704)) as dist
 FROM candidates
 ) inn
-WHERE dist < 5
+WHERE dist < 10
 ORDER BY dist
 LIMIT 1
 """, (objectid, last_point, last_point))

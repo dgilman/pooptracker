@@ -25,23 +25,39 @@
       </div>
     </div>
    <script type="text/javascript">
-	   var sewer = null;
+		var poopIcon = L.icon({
+			iconUrl: "{{ url_for('static', filename='poop.png') }}",
+			iconSize: [16, 16]
+		});
+
+
       var map = L.map('map').setView([41.20, -96], 11);
       var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
-		osm.is_tile_layer = true;
+		osm.keep_layer = true;
+
 		map.on('click', (e) => {
 			$.ajax("{{ url_for("track_poop") }}",
 				{data: {lat: e.latlng.lat, lng: e.latlng.lng, city: "{{ request.args["city"] }}" }})
 			.done(function(msg) {
 				map.eachLayer(function (l) {
-					if (!l.hasOwnProperty('is_tile_layer')) {
+					if (l instanceof L.LayerGroup && !l.hasOwnProperty('keep_layer')) {
 						map.removeLayer(l);
 					}
 				});
 				L.geoJSON(JSON.parse(msg)).addTo(map);
 			});
 		});
+
+		var terminals = L.geoJSON(JSON.parse('{{ terminals|safe }}'),
+			{pointToLayer: function(geoJsonPoint, latlng) {
+				return L.marker(latlng, {icon: poopIcon});
+		}}).addTo(map);
+		terminals.keep_layer = true;
+{% if "objectid" in request.args %}
+{# set asdf = foo() #}
+		console.log({{ request.args[objectid] }});
+{% endif %}
    </script>
 {% endblock %}

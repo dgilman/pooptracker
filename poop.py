@@ -37,13 +37,6 @@ def validate(flask_fn):
       return flask_fn(*args, **kwargs)
    return wrapped
 
-@app.route('/terminals')
-@validate
-def terminals():
-    query = "SELECT terminal FROM %s_terminals".format(request.args["city"])
-    g.c.execute(query)
-    return u'[' + u','.join(g.c) + u']'
-
 @app.route('/track_poop')
 @validate
 def track_poop():
@@ -85,17 +78,18 @@ LIMIT 1
    parent = parent[0]
 
    g.c.execute("""
-SELECT ST_AsGeoJSON(ST_Transform(sewer, 4326)) FROM omaha_sewers where objectid in (
-    WITH RECURSIVE sewers(objectid, downstream) as (
-       SELECT objectid, downstream
+SELECT ST_AsGeoJSON(sewer_wgs84) FROM omaha_sewers where objectid in (
+    WITH RECURSIVE sewers(objectid, downstream, all_children) as (
+       SELECT objectid, downstream, array[objectid] as all_children
        FROM omaha_sewers
        WHERE objectid = %s
 
        UNION ALL
 
-       SELECT dst.objectid, dst.downstream
+       SELECT dst.objectid, dst.downstream, sewers.all_children || dst.objectid as all_children
        FROM omaha_sewers dst
        JOIN sewers ON sewers.downstream = dst.objectid
+           AND dst.objectid <> ALL(sewers.all_children)
     )
     SELECT objectid FROM sewers
 )
@@ -107,7 +101,11 @@ SELECT ST_AsGeoJSON(ST_Transform(sewer, 4326)) FROM omaha_sewers where objectid 
 @app.route('/')
 @validate
 def map_page():
-   return render_template('map.html')
+   query = "SELECT terminal FROM {0}_terminals".format(request.args["city"])
+   g.c.execute(query)
+   terminals = u'[' + u','.join((x[0] for x in g.c)) + u']'
+
+   return render_template('map.html', terminals=terminals)
 
 if __name__ == '__main__':
    app.run(host='0.0.0.0', debug=True)
