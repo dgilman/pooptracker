@@ -114,7 +114,8 @@ WHERE upstream_manhole =
     if len(downstream_query) == 1:
         c.execute("UPDATE omaha_sewers SET downstream = %s WHERE objectid = %s", (downstream_query[0][0], objectid))
     elif len(downstream_query) > 1:
-        l.warning('FK anomaly on objectid {0}'.format(objectid))
+        #l.warning('FK anomaly on objectid {0}'.format(objectid))
+        pass
     else:
         # Chasing foreign keys has failed us, do a distance search.
         # Most queries wind up hitting this condition a few times
@@ -149,7 +150,7 @@ LIMIT 1
 """, (objectid, last_point, last_point))
         downstream_geom_query = c.fetchall()
         if len(downstream_geom_query) == 0:
-            l.info('No downstreams for objectid {0}, adding to terminals table'.format(objectid))
+            #l.info('No downstreams for objectid {0}, adding to terminals table'.format(objectid))
             c.execute("INSERT INTO omaha_terminals (terminal) VALUES (%s)", (last_point_geojson,))
         elif len(downstream_geom_query) == 1:
             c.execute("UPDATE omaha_sewers SET downstream = %s WHERE objectid = %s", (downstream_geom_query[0][0], objectid))
