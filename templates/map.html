@@ -56,8 +56,7 @@
 		}}).addTo(map);
 		terminals.keep_layer = true;
 {% if "objectid" in request.args %}
-{# set asdf = foo() #}
-		console.log({{ request.args[objectid] }});
+		var debugObjectid = L.geoJSON(JSON.parse('{{ get_objectid(request.args["objectid"])|safe }}')).addTo(map);
 {% endif %}
    </script>
 {% endblock %}

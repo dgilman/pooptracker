@@ -107,5 +107,17 @@ def map_page():
 
    return render_template('map.html', terminals=terminals)
 
+@app.context_processor
+@validate
+def get_objectid():
+    def fn(objectid):
+        query = "SELECT ST_AsGeoJSON(sewer_wgs84) AS geojson FROM {0}_sewers WHERE objectid = %s".format(request.args["city"])
+        g.c.execute(query, (int(objectid),))
+        rval = g.c.fetchall()
+        if len(rval) == 0:
+	    return
+        return rval[0][0]
+    return dict(get_objectid=fn)
+
 if __name__ == '__main__':
    app.run(host='0.0.0.0', debug=True)
