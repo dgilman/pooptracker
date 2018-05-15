@@ -95,12 +95,14 @@ CREATE TABLE omaha_terminals(
     terminal text
 )""")
 
+    types = {"exact": 0, "fk anomaly": 0, "geom lookup": 0, "terminal": 0}
     c.execute('SELECT objectid FROM omaha_sewers')
-    [omaha_calc_sewer(l, c, objectid[0]) for objectid in c.fetchall()]
+    [omaha_calc_sewer(l, c, objectid[0], types) for objectid in c.fetchall()]
 
-    l.info('omaha_calc finished')
+    l.info('omaha_calc finished. Exact hits: {0}, Multiple exact hits: {1}, Downstreams determined with geo queries: {2}, terminal sewers: {3}'.format(
+        types["exact"], types["fk anomaly"], types["geom lookup"], types["terminal"]))
 
-def omaha_calc_sewer(l, c, objectid):
+def omaha_calc_sewer(l, c, objectid, types):
     # We have this hacky stuff because we need to do tiny distance searches on the last segment of every sewer.
     # Luckily for us the most downstream segment is also the last one in the geometry.
 
@@ -113,9 +115,10 @@ WHERE upstream_manhole =
     downstream_query = c.fetchall()
     if len(downstream_query) == 1:
         c.execute("UPDATE omaha_sewers SET downstream = %s WHERE objectid = %s", (downstream_query[0][0], objectid))
+        types["exact"] += 1
     elif len(downstream_query) > 1:
         #l.warning('FK anomaly on objectid {0}'.format(objectid))
-        pass
+        types["fk anomaly"] += 1
     else:
         # Chasing foreign keys has failed us, do a distance search.
         # Most queries wind up hitting this condition a few times
@@ -127,7 +130,7 @@ FROM (SELECT ST_DumpPoints(sewer) as dp FROM omaha_sewers WHERE objectid = %s) i
 """, (objectid,))
         last_point, last_point_geojson = c.fetchall()[-1]
 
-        # This query narrows us down to the 100 nearest objects measured by center point,
+        # This query narrows us down to the 10000 nearest objects measured by center point,
         # then uses the geometry-aware ST_Distance on that set to find the closest edge
         # Note that ST_Distance returns units of the SRID, for 102704 that's feet
         c.execute("""
@@ -138,7 +141,7 @@ WITH candidates AS (
    FROM omaha_sewers
    WHERE objectid != %s
    ORDER BY sewer <-> ST_PointFromText(%s, 102704)
-   LIMIT 100
+   LIMIT 10000
 )
 SELECT objectid,
    ST_Distance(sewer, ST_PointFromText(%s, 102704)) as dist
@@ -152,8 +155,10 @@ LIMIT 1
         if len(downstream_geom_query) == 0:
             #l.info('No downstreams for objectid {0}, adding to terminals table'.format(objectid))
             c.execute("INSERT INTO omaha_terminals (terminal) VALUES (%s)", (last_point_geojson,))
+            types["terminal"] += 1
         elif len(downstream_geom_query) == 1:
             c.execute("UPDATE omaha_sewers SET downstream = %s WHERE objectid = %s", (downstream_geom_query[0][0], objectid))
+            types["geom lookup"] += 1
         else:
             raise Exception('Should never happen')
 
