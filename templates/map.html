@@ -50,11 +50,13 @@
 			});
 		});
 
+{% if "terminals" in request.args %}
 		var terminals = L.geoJSON(JSON.parse('{{ terminals|safe }}'),
 			{pointToLayer: function(geoJsonPoint, latlng) {
 				return L.marker(latlng, {icon: poopIcon});
 		}}).addTo(map);
 		terminals.keep_layer = true;
+{% endif %}
 {% if "objectid" in request.args %}
 		var debugObjectid = L.geoJSON(JSON.parse('{{ get_objectid(request.args["objectid"])|safe }}')).addTo(map);
 {% endif %}
