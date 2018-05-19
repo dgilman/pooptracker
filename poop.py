@@ -78,7 +78,7 @@ LIMIT 1
    parent = parent[0]
 
    g.c.execute("""
-SELECT ST_AsGeoJSON(sewer_wgs84) FROM omaha_sewers where objectid in (
+SELECT sewer_wgs84 FROM omaha_sewers where objectid in (
     WITH RECURSIVE sewers(objectid, downstream, all_children) as (
        SELECT objectid, downstream, array[objectid] as all_children
        FROM omaha_sewers
@@ -111,7 +111,7 @@ def map_page():
 @validate
 def get_objectid():
     def fn(objectid):
-        query = "SELECT ST_AsGeoJSON(sewer_wgs84) AS geojson FROM {0}_sewers WHERE objectid = %s".format(request.args["city"])
+        query = "SELECT sewer_wgs84 AS geojson FROM {0}_sewers WHERE objectid = %s".format(request.args["city"])
         g.c.execute(query, (int(objectid),))
         rval = g.c.fetchall()
         if len(rval) == 0:
