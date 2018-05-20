@@ -42,20 +42,20 @@ def validate(flask_fn):
 @validate
 def track_poop():
    if 'lat' not in request.args or 'lng' not in request.args:
-      return
+      return ''
 
    try:
       lat = float(request.args["lat"])
       lon = float(request.args["lng"])
    except ValueError:
-      return
+      return ''
 
    city_conf = config.CITIES[request.args["city"]]
 
    if not ((city_conf["lat_lt"] <= lat) and (city_conf["lat_gt"] >= lat)) \
       or \
       not ((city_conf["lon_lt"] <= lon) and (city_conf["lon_gt"] >= lon)):
-      return
+      return ''
 
    g.c.execute("""
 SELECT objectid
@@ -75,7 +75,7 @@ LIMIT 1
 """, (lon, lat, lon, lat))
    parent = g.c.fetchall()
    if len(parent) == 0:
-      return
+      return ''
    parent = parent[0]
 
    g.c.execute("""
@@ -96,11 +96,15 @@ SELECT sewer_wgs84, objectid, downstream FROM omaha_sewers where objectid in (
 )
 """, (parent,))
    sewers = g.c.fetchall()
-   terminal_id = [x[1] for x in sewers if x[2] == None][0]
-   g.c.execute("SELECT tail_wgs84 FROM omaha_sewers WHERE objectid = %s", (terminal_id,))
-   terminal = g.c.fetchall()
-   if len(terminal) != 0:
-      terminal = terminal[0][0]
+   terminal_id = [x[1] for x in sewers if x[2] == None]
+   if len(terminal_id) == 0:
+      terminal = ''
+   else:
+      terminal_id = terminal_id[0]
+      g.c.execute("SELECT tail_wgs84 FROM omaha_sewers WHERE objectid = %s", (terminal_id,))
+      terminal = g.c.fetchall()
+      if len(terminal) != 0:
+         terminal = terminal[0][0]
 
    return json.dumps({"sewers": u'[' + u','.join((x[0] for x in sewers)) + u']', "terminal": terminal})
 
