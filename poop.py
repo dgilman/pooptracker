@@ -1,4 +1,5 @@
 from functools import wraps
+import json
 
 import psycopg2
 import psycopg2.extensions
@@ -78,7 +79,7 @@ LIMIT 1
    parent = parent[0]
 
    g.c.execute("""
-SELECT sewer_wgs84 FROM omaha_sewers where objectid in (
+SELECT sewer_wgs84, objectid, downstream FROM omaha_sewers where objectid in (
     WITH RECURSIVE sewers(objectid, downstream, all_children) as (
        SELECT objectid, downstream, array[objectid] as all_children
        FROM omaha_sewers
@@ -94,18 +95,28 @@ SELECT sewer_wgs84 FROM omaha_sewers where objectid in (
     SELECT objectid FROM sewers
 )
 """, (parent,))
+   sewers = g.c.fetchall()
+   terminal_id = [x[1] for x in sewers if x[2] == None][0]
+   g.c.execute("SELECT tail_wgs84 FROM omaha_sewers WHERE objectid = %s", (terminal_id,))
+   terminal = g.c.fetchall()
+   if len(terminal) != 0:
+      terminal = terminal[0][0]
 
-   sewer_json = u'[' + u','.join((x[0] for x in g.c)) + u']'
-   return sewer_json
+   return json.dumps({"sewers": u'[' + u','.join((x[0] for x in sewers)) + u']', "terminal": terminal})
 
 @app.route('/')
 @validate
 def map_page():
-   query = "SELECT terminal FROM {0}_terminals".format(request.args["city"])
-   g.c.execute(query)
-   terminals = u'[' + u','.join((x[0] for x in g.c)) + u']'
+   return render_template('map.html')
 
-   return render_template('map.html', terminals=terminals)
+@app.context_processor
+@validate
+def get_terminals():
+   def fn():
+      query = "SELECT tail_wgs84 FROM {0}_sewers WHERE downstream IS NULL".format(request.args["city"])
+      g.c.execute(query)
+      return u'[' + u','.join((x[0] for x in g.c)) + u']'
+   return dict(get_terminals=fn)
 
 @app.context_processor
 @validate

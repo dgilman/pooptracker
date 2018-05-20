@@ -25,11 +25,10 @@
       </div>
     </div>
    <script type="text/javascript">
-		var poopIcon = L.icon({
+		var poopIconBig = L.icon({
 			iconUrl: "{{ url_for('static', filename='poop.png') }}",
-			iconSize: [16, 16]
+			iconSize: [32, 32]
 		});
-
 
       var map = L.map('map').setView([41.20, -96], 11);
       var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -46,14 +45,23 @@
 						map.removeLayer(l);
 					}
 				});
-				L.geoJSON(JSON.parse(msg)).addTo(map);
+				msg_object = JSON.parse(msg);
+				L.geoJSON(JSON.parse(msg_object["sewers"])).addTo(map);
+				L.geoJSON(JSON.parse(msg_object["terminal"]),
+					{pointToLayer: function(geoJsonPoint, latlng) {
+						return L.marker(latlng, {icon: poopIconBig});
+				}}).addTo(map);
 			});
 		});
 
 {% if "terminals" in request.args %}
-		var terminals = L.geoJSON(JSON.parse('{{ terminals|safe }}'),
+		var poopIconSmall = L.icon({
+			iconUrl: "{{ url_for('static', filename='poop.png') }}",
+			iconSize: [16, 16]
+		});
+		var terminals = L.geoJSON(JSON.parse('{{ get_terminals()|safe }}'),
 			{pointToLayer: function(geoJsonPoint, latlng) {
-				return L.marker(latlng, {icon: poopIcon});
+				return L.marker(latlng, {icon: poopIconSmall});
 		}}).addTo(map);
 		terminals.keep_layer = true;
 {% endif %}
