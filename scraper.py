@@ -156,6 +156,8 @@ def omaha_cleanup(c):
     c.execute("UPDATE omaha_sewers SET downstream = 81703 WHERE objectid IN (100668, 100526)")
     # Missing pipe near 204th and F?
     c.execute("UPDATE omaha_sewers SET downstream = 39602 WHERE objectid = 96644")
+    # Karen Park - this is likely a bug
+    c.execute("UPDATE omaha_sewers SET downstream = 280610 WHERE objectid = 75425")
 
 def omaha_post_cleanup(c):
     # Fix up the south omaha WTP
