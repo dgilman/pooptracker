@@ -153,6 +153,8 @@ def omaha_cleanup(c):
     c.execute("UPDATE omaha_sewers SET downstream = 39602 WHERE objectid = 96644")
     # Karen Park - this is likely a bug
     c.execute("UPDATE omaha_sewers SET downstream = 280610 WHERE objectid = 75425")
+    # South Omaha Bridge
+    c.execute("DELETE FROM omaha_sewers WHERE objectid IN (83771, 83450)")
 
 def omaha_post_cleanup(c):
     # Fix up the south omaha WTP
