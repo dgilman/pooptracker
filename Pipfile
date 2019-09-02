@@ -8,9 +8,9 @@ verify_ssl = true
 [packages]
 gunicorn = "==19.9.0"
 flask = "==1.1.1"
-psycopg2 = "==2.8.3"
 requests = "==2.22.0"
 black = "*"
+psycopg2-binary = "*"
 
 [requires]
 python_version = "3.7"
