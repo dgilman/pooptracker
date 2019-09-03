@@ -52,7 +52,7 @@ CREATE TABLE omaha_sewers (
     feature_cnt = 0
     line_types = {}
     # SWR_TYPE != 1 and LINE_TYPE NOT IN ('Abandoned','Private')
-    SEWER_QUERY = "https://gis.dogis.org/arcgis/rest/services/Public_Works/Sewer_Network/MapServer/1/query?where=SWR_TYPE%21%3D1+and+LINE_TYPE+NOT+IN+%28%27Abandoned%27%2C+%27Private%27%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=OBJECTID%2CSWR_TYPE%2CLINE_TYPE%2CUP_MANHOLE%2CDN_MANHOLE&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset={0}&resultRecordCount={1}&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson"
+    SEWER_QUERY = "https://gis.dogis.org/arcgis/rest/services/Public_Works/Sewers/MapServer/1/query?where=SWR_TYPE%21%3D1+and+LINE_TYPE+NOT+IN+%28%27Abandoned%27%2C+%27Private%27%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=OBJECTID%2CSWR_TYPE%2CLINE_TYPE%2CUP_MANHOLE%2CDN_MANHOLE&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset={0}&resultRecordCount={1}&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson"
 
     while True:
         l.debug("Fetching features from offset %s", offset)
