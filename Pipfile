@@ -6,14 +6,11 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-gunicorn = "==19.9.0"
-flask = "==1.1.1"
-requests = "==2.22.0"
+gunicorn = "*"
+flask = "*"
+requests = "*"
 black = "*"
 psycopg2-binary = "*"
 
 [requires]
-python_version = "3.7"
-
-[pipenv]
-allow_prereleases = true
+python_version = "3.11"
